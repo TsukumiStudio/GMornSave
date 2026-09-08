@@ -27,7 +27,6 @@ func create_control() -> Control:
 	control.action = func() -> String:
 		var error := erase_save()
 		return "セーブデータを削除しました" if error == OK else "削除できませんでした: " + error_string(error)
-	control.get_node("Status").text = "対象: " + save_path
 	return panel
 
 func erase_save() -> Error:
