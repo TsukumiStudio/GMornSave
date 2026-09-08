@@ -1,7 +1,10 @@
 @tool
 extends "../gmorn_debug_menu/gmorn_debug_menu_section.gd"
 
-const ACTION := preload("../gmorn_debug_menu/gmorn_debug_menu_stopped_action.tscn")
+const PANEL := preload("gmorn_save_section.tscn")
+
+# テストでは外部アプリを起動せず、要求したパスを検証する。
+var open_file: Callable = OS.shell_open
 const STORE := preload("gmorn_save_store.gd")
 
 ## このプロジェクトの削除対象。ディレクトリ単位の削除は行わない。
@@ -10,14 +13,22 @@ const STORE := preload("gmorn_save_store.gd")
 @export var migration_marker_path := ""
 
 func create_control() -> Control:
-	var control := ACTION.instantiate()
+	var panel := PANEL.instantiate()
+	var opener := panel.get_node("Open")
+	opener.action_text = "セーブデータを開く"
+	opener.action = func() -> String:
+		if not FileAccess.file_exists(save_path):
+			return "セーブデータがまだありません"
+		var error: Error = open_file.call(ProjectSettings.globalize_path(save_path))
+		return "セーブデータを開きました" if error == OK else "開けませんでした: " + error_string(error)
+	var control := panel.get_node("Delete")
 	control.action_text = "セーブデータの削除"
 	control.requires_confirmation = true
 	control.action = func() -> String:
 		var error := erase_save()
 		return "セーブデータを削除しました" if error == OK else "削除できませんでした: " + error_string(error)
 	control.get_node("Status").text = "対象: " + save_path
-	return control
+	return panel
 
 func erase_save() -> Error:
 	if not save_path.begins_with("user://") or save_path.get_file().is_empty():
