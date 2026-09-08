@@ -112,3 +112,10 @@ store.enabled = false                        # 書き出しだけ止める（読
 ## ライセンス
 
 Unlicense（パブリックドメイン）。
+
+## Editorから削除する（GMornDebugMenu連携）
+
+`gmorn_save_section.gd` を付けた `.tres` をプロジェクトのセクション置き場へ登録する。
+このEditor連携には `../gmorn_debug_menu` が必要。`save_path` に削除する1ファイルの `user://` パスを指定し、旧版移行防止の印が必要なら `migration_marker_path` も設定する。
+ゲーム停止中のみ二度押しで本体・バックアップ・書きかけを削除する。ディレクトリ全体は削除しない。
+印の作成や削除に失敗した場合は成功表示にしない。アドオンの検証では利用者の本物のセーブを削除しない。

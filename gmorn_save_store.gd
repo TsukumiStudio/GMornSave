@@ -1,3 +1,4 @@
+@tool
 extends RefCounted
 
 ## 壊れない保存。1つの置き場ぶんを受け持つ。
@@ -140,7 +141,9 @@ func erase() -> Error:
 		error = DirAccess.remove_absolute(ProjectSettings.globalize_path(path))
 	for extra: String in [backup_path(), temporary_path()]:
 		if FileAccess.file_exists(extra):
-			DirAccess.remove_absolute(ProjectSettings.globalize_path(extra))
+			var extra_error := DirAccess.remove_absolute(ProjectSettings.globalize_path(extra))
+			if error == OK:
+				error = extra_error
 	return error
 
 ## その置き場が読める形かどうか。
