@@ -3,13 +3,16 @@
 [node name="Snapshots" type="VBoxContainer"]
 script = ExtResource("1")
 size_flags_horizontal = 3
-[node name="Name" type="LineEdit" parent="."]
+[node name="Create" type="HBoxContainer" parent="."]
+layout_mode = 2
+[node name="Name" type="LineEdit" parent="Create"]
+size_flags_horizontal = 3
 layout_mode = 2
 placeholder_text = "セーブ名"
 max_length = 80
-[node name="Save" type="Button" parent="."]
+[node name="Save" type="Button" parent="Create"]
 layout_mode = 2
-text = "名前を付けて保存"
+text = "保存"
 [node name="Refresh" type="Button" parent="."]
 layout_mode = 2
 text = "一覧を更新"

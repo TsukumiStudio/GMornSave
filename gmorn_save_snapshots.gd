@@ -52,3 +52,11 @@ func restore_snapshot(value: String) -> String:
 	var current := STORE.new()
 	current.path = save_path
 	return "" if current.save(snapshot.load_data({})) else "現在のセーブを置き換えられませんでした"
+
+func delete_snapshot(value: String) -> String:
+	if not valid_name(value):
+		return "セーブ名が不正です"
+	var snapshot := STORE.new()
+	snapshot.path = directory().path_join(value + ".json")
+	var error: Error = snapshot.erase()
+	return "" if error == OK else "削除できませんでした: " + error_string(error)

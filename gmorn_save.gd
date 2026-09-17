@@ -59,12 +59,14 @@ func snapshot_request(command: String, value := "") -> Dictionary:
 			error = slots.restore_snapshot(value)
 			if error.is_empty():
 				error = String(snapshot_loaded.call())
+		"delete":
+			error = slots.delete_snapshot(value)
 		"list":
 			pass
 		_:
 			error = "不明なセーブ操作です"
 	return {"ok": error.is_empty(), "message": error if not error.is_empty() else (
-		"保存しました" if command == "save" else "ロードしました。タイトルから開始します" if command == "load" else ""),
+		"削除しました" if command == "delete" else "保存しました" if command == "save" else "ロードしました。タイトルから開始します" if command == "load" else ""),
 		"names": slots.names()}
 
 func _capture(message: String, data: Array) -> bool:

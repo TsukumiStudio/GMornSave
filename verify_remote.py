@@ -32,12 +32,12 @@ func _run() -> void:
 				return
 			await get_tree().process_frame
 		var title := "名前付き%d" % index
-		panel.get_node("Name").text = title
-		panel.get_node("Save").pressed.emit()
+		panel.get_node("Create/Name").text = title
+		panel.get_node("Create/Save").pressed.emit()
 		var button: Button
 		deadline = Time.get_ticks_msec() + 10000
 		while button == null:
-			for child: Button in panel.get_node("Saves").get_children():
+			for child: Button in panel.get_node("Saves").find_children("Load", "Button", true, false):
 				if child.text == title:
 					button = child
 			if Time.get_ticks_msec() > deadline:
@@ -49,6 +49,15 @@ func _run() -> void:
 		while not FileAccess.file_exists("res://loaded"):
 			if Time.get_ticks_msec() > deadline:
 				_finish("FAIL: 一覧のロードがゲームへ届かない")
+				return
+			await get_tree().process_frame
+		while panel._pending_until > 0:
+			await get_tree().process_frame
+		button.get_parent().get_node("Delete").pressed.emit()
+		deadline = Time.get_ticks_msec() + 5000
+		while panel._last_names.has(title):
+			if Time.get_ticks_msec() > deadline:
+				_finish("FAIL: 実行中の削除が一覧に反映されない")
 				return
 			await get_tree().process_frame
 		EditorInterface.stop_playing_scene()

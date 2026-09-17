@@ -1,6 +1,7 @@
 @tool
 extends VBoxContainer
 
+const ROW := preload("gmorn_save_snapshot_row.tscn")
 const SNAPSHOTS := preload("gmorn_save_snapshots.gd")
 const DEBUGGER := preload("gmorn_save_debugger.gd")
 var save_path := "user://save.json"
@@ -13,8 +14,8 @@ var _last_names := PackedStringArray()
 var _populated := false
 
 func _ready() -> void:
-	$Save.pressed.connect(func() -> void: request("save", $Name.text))
-	$Name.text_submitted.connect(func(value: String) -> void: request("save", value))
+	$Create/Save.pressed.connect(func() -> void: request("save", $Create/Name.text))
+	$Create/Name.text_submitted.connect(func(value: String) -> void: request("save", value))
 	$Refresh.pressed.connect(func() -> void: request("list"))
 	_process(0.0)
 	if not _playing:
@@ -37,9 +38,9 @@ func _process(_delta: float) -> void:
 		_pending_until = 0
 		$Status.text = "応答がありません。接続後に一覧を更新してください"
 	$Status.visible = not $Status.text.is_empty()
-	$Save.disabled = _pending_until > 0
+	$Create/Save.disabled = _pending_until > 0
 	$Refresh.disabled = _pending_until > 0
-	for button: Button in $Saves.get_children():
+	for button: Button in $Saves.find_children("*", "Button", true, false):
 		button.disabled = _pending_until > 0
 
 func request(command: String, value := "") -> void:
@@ -59,8 +60,10 @@ func request(command: String, value := "") -> void:
 		error = slots.create_snapshot(value)
 	elif command == "load":
 		error = slots.restore_snapshot(value)
+	elif command == "delete":
+		error = slots.delete_snapshot(value)
 	_receive({"names": slots.names(), "message": error if not error.is_empty() else (
-		"保存しました" if command == "save" else "ロードしました。次回はタイトルから開始します" if command == "load" else "")})
+		"削除しました" if command == "delete" else "保存しました" if command == "save" else "ロードしました。次回はタイトルから開始します" if command == "load" else "")})
 
 func _receive(result: Dictionary) -> void:
 	_pending_until = 0
@@ -72,12 +75,14 @@ func _receive(result: Dictionary) -> void:
 	_last_names = names
 	_populated = true
 	for value: String in names:
-		var button := Button.new()
+		var row := ROW.instantiate()
+		var button: Button = row.get_node("Load")
 		button.text = value
 		button.tooltip_text = "このJSONをロードしてタイトルへ戻ります"
 		button.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 		button.pressed.connect(request.bind("load", value))
-		$Saves.add_child(button)
+		row.get_node("Delete").pressed.connect(request.bind("delete", value))
+		$Saves.add_child(row)
 
 func _clear_rows() -> void:
 	_populated = false
