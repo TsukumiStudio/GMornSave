@@ -5,6 +5,13 @@ extends SceneTree
 ## 通る道だけを見ても意味がない。ここで見たいのは「壊したときに何が残るか」で
 ## ある。書きかけで落ちた、中身が切れた、本体だけ消えた、の3つを実際に作る。
 
+class UnreadableFinalStore extends "res://addons/gmorn_save/gmorn_save_store.gd":
+	var reject_final := false
+	func is_readable(target: String) -> bool:
+		if reject_final and target == path and not FileAccess.file_exists(temporary_path()):
+			return false
+		return super.is_readable(target)
+
 const SAVE_PATH := "res://addons/gmorn_save/gmorn_save.gd"
 const PROBE_DIRECTORY := "user://gmorn_save_verify"
 const PROBE_PATH := PROBE_DIRECTORY + "/save.json"
@@ -106,6 +113,29 @@ func _run() -> void:
 
 	_clean()
 	print("結果=%d 控え=%s" % [store.last_outcome, store.backup_path()])
+	var final_store := UnreadableFinalStore.new()
+	final_store.path = PROBE_PATH
+	assert(final_store.save({"money": 314}))
+	final_store.reject_final = true
+	assert(not final_store.save({"money": 999}), "差替え後の破損を成功扱いした")
+	assert(JSON.parse_string(FileAccess.get_file_as_string(PROBE_PATH)).money == 314,
+		"差替え後の検査失敗で前の保存を失った")
+	_clean()
+	var slots = load("res://addons/gmorn_save/gmorn_save_snapshots.gd").new()
+	slots.save_path = PROBE_PATH
+	assert(slots.create_snapshot("確認用", {"money": 42, "day": 8}).is_empty())
+	assert(slots.names() == PackedStringArray(["確認用"]))
+	assert(not slots.create_snapshot("確認用", {"money": 0}).is_empty())
+	assert(not slots.create_snapshot("../別の場所", {}).is_empty())
+	assert(slots.restore_snapshot("確認用").is_empty())
+	assert(store.load_data({}).money == 42)
+	FileAccess.open(slots.directory().path_join("破損.json"), FileAccess.WRITE).store_string("[]")
+	assert(not slots.restore_snapshot("破損").is_empty())
+	assert(store.load_data({}).money == 42)
+	for file: String in DirAccess.get_files_at(slots.directory()):
+		DirAccess.remove_absolute(slots.directory().path_join(file))
+	DirAccess.remove_absolute(slots.directory())
+	_clean()
 	print("GMORN SAVE VERIFY: PASS")
 	quit(0)
 

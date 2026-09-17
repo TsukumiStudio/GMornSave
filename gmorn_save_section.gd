@@ -14,6 +14,7 @@ const STORE := preload("gmorn_save_store.gd")
 
 func create_control() -> Control:
 	var panel := PANEL.instantiate()
+	panel.get_node("Snapshots").save_path = save_path
 	var opener := panel.get_node("Open")
 	opener.action_text = "セーブデータを開く"
 	opener.action = func() -> String:

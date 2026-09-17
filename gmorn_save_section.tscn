@@ -1,6 +1,8 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene load_steps=3 format=3]
 
 [ext_resource type="PackedScene" path="../gmorn_debug_menu/gmorn_debug_menu_stopped_action.tscn" id="1"]
+
+[ext_resource type="PackedScene" path="gmorn_save_snapshot_panel.tscn" id="snapshots"]
 
 [node name="SaveSection" type="VBoxContainer"]
 size_flags_horizontal = 3
@@ -9,4 +11,7 @@ size_flags_horizontal = 3
 layout_mode = 2
 
 [node name="Delete" parent="." instance=ExtResource("1")]
+layout_mode = 2
+
+[node name="Snapshots" parent="." instance=ExtResource("snapshots")]
 layout_mode = 2

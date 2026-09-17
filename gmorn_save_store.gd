@@ -110,23 +110,41 @@ func save(data: Dictionary) -> bool:
 		save_failed.emit(path)
 		return false
 	file.store_string(JSON.stringify(data, "\t"))
+	file.flush()
+	var write_error := file.get_error()
 	file.close()
 	# 書けたつもりで中身が欠けていることがある（容量切れなど）。差し替える前に
 	# 読み直して確かめる。駄目なら本体には触らない。
-	if not is_readable(temporary):
+	if write_error != OK or not is_readable(temporary):
 		DirAccess.remove_absolute(ProjectSettings.globalize_path(temporary))
 		push_warning("保存を書き出せなかったため前回の内容を残しました: %s" % path)
 		save_failed.emit(path)
 		return false
 	# 控えは「読めた本体」だけから作る。壊れた本体で控えを上書きすると、
 	# 戻す先が無くなる。
-	if FileAccess.file_exists(path) and is_readable(path):
-		DirAccess.copy_absolute(
+	var had_previous := FileAccess.file_exists(path) and is_readable(path)
+	if had_previous:
+		var backup_error := DirAccess.copy_absolute(
 			ProjectSettings.globalize_path(path),
 			ProjectSettings.globalize_path(backup_path()))
-	DirAccess.rename_absolute(
+		if backup_error != OK:
+			DirAccess.remove_absolute(ProjectSettings.globalize_path(temporary))
+			save_failed.emit(path)
+			return false
+	var replace_error := DirAccess.rename_absolute(
 		ProjectSettings.globalize_path(temporary),
 		ProjectSettings.globalize_path(path))
+	if replace_error != OK:
+		DirAccess.remove_absolute(ProjectSettings.globalize_path(temporary))
+		save_failed.emit(path)
+		return false
+	if not is_readable(path):
+		if had_previous:
+			DirAccess.rename_absolute(ProjectSettings.globalize_path(backup_path()), ProjectSettings.globalize_path(path))
+		else:
+			DirAccess.remove_absolute(ProjectSettings.globalize_path(path))
+		save_failed.emit(path)
+		return false
 	return true
 
 ## 消す。控えと書きかけも一緒に消す。

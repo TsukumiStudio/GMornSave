@@ -121,3 +121,28 @@ Unlicense（パブリックドメイン）。
 印の作成や削除に失敗した場合は成功表示にしない。アドオンの検証では利用者の本物のセーブを削除しない。
 
 「セーブデータを開く」は同じ `save_path` のJSONをOSの既定アプリで開く。未保存なら案内だけを表示する。再生中は操作できない。
+
+## 名前付きJSONセーブ
+
+GMornSave欄の「セーブ名」に入力して「名前を付けて保存」を押す。一覧の名前を押すと、そのJSONを現在の通常保存へロードする。保存先は `<save_path>.snapshots/<名前>.json` で、ファイルの中身はゲームの辞書そのもの。通常のオートセーブで名前付きJSONは更新されない。同名は上書きせず、別名の入力を求める。空名・パス・先頭末尾の空白・80文字超などは拒否する。
+
+停止中はセクションResourceの `save_path` を読み書きする。実行中もGMornSaveセクションを表示するには `hide_when_playing=false` にする。「開く」「削除」は従来どおり停止中のみ。実行中の保存・ロードはEditorDebugger経由でゲームへ送り、次の接続先から現在の保存先・未保存の最新値を取得する。ゲームが1つだけ接続されているときに操作可能で、未接続・複数実行・未設定・5秒間応答なしは成功扱いしない。「一覧を更新」で再同期できる。
+
+```gdscript
+GMornSave.configure_snapshots(
+    func() -> String: return current_save_path(),
+    func() -> Dictionary: return current_data.duplicate(true),
+    func() -> String:
+        load_game_data()
+        var error := get_tree().reload_current_scene()
+        return "" if error == OK else error_string(error)
+)
+```
+
+第三引数は通常保存の置換成功後に呼ぶ。タイトルからの再開など、ゲーム固有の初期化を担当し、成功なら空文字、失敗なら説明文を返す。実行中のゲームは起動ごとに登録する。`GMornSave.snapshot_request("save" / "load" / "list", 名前)` でも同じ処理を呼べる。
+
+壊れたJSON・辞書以外・存在しない名前はロードしない。通常保存は既存Storeで退避・原子的に差し替える。書込み、バックアップ、renameの失敗はエラーを返し、前の通常保存を保つ。ロード前の通常保存は `.bak` に残る。名前付き保存の削除機能は設けていない。
+
+この更新を開いているEditorへ取り込む際は、GMornSaveおよびセクションを表示するGMornDebugMenuを一度OFF→ONするか、Editorを開き直す。シーン再読込だけではEditorDebuggerPluginを再登録できない。
+
+`sh verify.sh` は保存・復元・同名拒否・不正パス・破損JSONを検査する。`python3 verify_remote.py` は一時プロジェクトのヘッドレスEditorとゲームを実接続し、名前入力→保存→一覧のボタンからロード→停止→再実行を検査する。実際のプレイヤーの保存は使用しない。
