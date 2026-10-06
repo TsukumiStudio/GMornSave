@@ -14,6 +14,8 @@ const CLOUD_PANEL := preload("gmorn_save_cloud_panel.tscn")
 const CLOUD_MIN_INTERVAL_SETTING := "gmorn_save_cloud/min_interval_seconds"
 var debugger: EditorDebuggerPlugin
 var cloud_panel: Control
+## このプラグインが自動読み込みを足したときだけ、外すときにも消す（手で書いた登録は残す）。
+var added_cloud_autoload := false
 
 ## 置き場所を決め打ちにしない。submodule で好きな名前の場所へ入れられるように、
 ## 自分の居場所から辿る。
@@ -30,6 +32,7 @@ func _enter_tree() -> void:
 		add_autoload_singleton(AUTOLOAD_NAME, _autoload_path())
 	if not ProjectSettings.has_setting("autoload/" + CLOUD_AUTOLOAD_NAME):
 		add_autoload_singleton(CLOUD_AUTOLOAD_NAME, _autoload_path().get_base_dir().path_join("gmorn_save_cloud.gd"))
+		added_cloud_autoload = true
 	# セーブの送信の最短間隔（秒）。0 なら保存のたびに（2秒の静かな間の後で）送る。
 	if not ProjectSettings.has_setting(CLOUD_MIN_INTERVAL_SETTING):
 		ProjectSettings.set_setting(CLOUD_MIN_INTERVAL_SETTING, 0.0)
@@ -50,4 +53,5 @@ func _exit_tree() -> void:
 		remove_control_from_docks(cloud_panel)
 		cloud_panel.queue_free()
 	remove_autoload_singleton(AUTOLOAD_NAME)
-	remove_autoload_singleton(CLOUD_AUTOLOAD_NAME)
+	if added_cloud_autoload:
+		remove_autoload_singleton(CLOUD_AUTOLOAD_NAME)

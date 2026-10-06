@@ -111,7 +111,7 @@ store.enabled = false                        # 書き出しだけ止める（読
 
 ## クラウド保存（GMornSaveCloud）
 
-GMornSaveで保存したJSONを [GMornSaveServer](https://github.com/TsukumiStudio/GMornSaveServer) へバックアップし、EditorからSave IDで別のセーブをプレビュー起動できる。通常の保存データは置き換えない。以前は別アドオン GMornSaveSaver だったものを、2026-10-07 にこのアドオンへ統合した。サイドカー `*.cloud.json` の形は変えていないので、統合前に登録した利用者もそのまま送れる。設定の名前は `gmorn_save_saver/*` から `gmorn_save_cloud/*` へ、環境変数は `GMORN_SAVE_SAVER_*` から `GMORN_SAVE_CLOUD_*` へ変わった。
+GMornSaveで保存したJSONを [GMornSaveServer](https://github.com/TsukumiStudio/GMornSaveServer) へバックアップし、EditorからSave IDで別のセーブをプレビュー起動できる。通常の保存データは置き換えない。以前は別アドオン GMornSaveSaver だったものを、2026-10-07 にこのアドオンへ統合した。サイドカー `*.cloud.json` の形は変えていないので、統合前に登録した利用者もそのまま送れる。設定の名前は `gmorn_save_saver/*` から `gmorn_save_cloud/*` へ、環境変数は `GMORN_SAVE_SAVER_*` から `GMORN_SAVE_CLOUD_*` へ変わった。保存先の `user://gmorn_save_saver_*`（取り寄せたプレビュー）も `user://gmorn_save_cloud_*` へ変わった。旧アドオンは無効にして取り除くこと（残すと同じ `.cloud.json` を二重に書く）。endpoint・project_id は新しい設定名で設定し直す。
 
 管理セーブの取得には [cloudflared](https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/downloads/) が必要（`PATH`、`/opt/homebrew/bin`、または`/usr/local/bin`から検出）。単体検証は `./verify_cloud.sh`。
 
@@ -144,7 +144,7 @@ GMornSaveCloud.resume(save_path) # 起動時、通常保存をロードした後
 
 MornDropの画像URLは公開URLです。URLを知る人は閲覧でき、最後に参照されてから30日後に削除されます。画面に個人情報を出した状態で保存しないでください。
 
-送信のopt-in環境変数はEditorプラグイン中に限り `GMORN_SAVE_CLOUD_EDITOR_OPT_IN=1`、headless中に限り `GMORN_SAVE_CLOUD_TEST_OPT_IN=1` です。headlessでプレビュー消費テストを行う場合だけ `GMORN_SAVE_CLOUD_TEST_PREVIEW=1` を指定します。`GMORN_SAVE_CLOUD_LIVE_TEST=1` を付けて `verify.sh` を実行すると、設定済みのendpoint・project_idへ実際の登録、二段階アップロード、取得を行います。Live検証の管理取得では、事前に同じendpointへcloudflaredで認証しキャッシュを作成してください。
+送信のopt-in環境変数はEditorプラグイン中に限り `GMORN_SAVE_CLOUD_EDITOR_OPT_IN=1`、headless中に限り `GMORN_SAVE_CLOUD_TEST_OPT_IN=1` です。headlessでプレビュー消費テストを行う場合だけ `GMORN_SAVE_CLOUD_TEST_PREVIEW=1` を指定します。`GMORN_SAVE_CLOUD_LIVE_TEST=1` を付けて `verify_cloud.sh` を実行すると、設定済みのendpoint・project_idへ実際の登録、二段階アップロード、取得を行います。Live検証の管理取得では、事前に同じendpointへcloudflaredで認証しキャッシュを作成してください。
 
 ## ライセンス
 
