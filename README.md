@@ -109,6 +109,43 @@ store.enabled = false                        # 書き出しだけ止める（読
 ./verify.sh
 ```
 
+## クラウド保存（GMornSaveCloud）
+
+GMornSaveで保存したJSONを [GMornSaveServer](https://github.com/TsukumiStudio/GMornSaveServer) へバックアップし、EditorからSave IDで別のセーブをプレビュー起動できる。通常の保存データは置き換えない。以前は別アドオン GMornSaveSaver だったものを、2026-10-07 にこのアドオンへ統合した。サイドカー `*.cloud.json` の形は変えていないので、統合前に登録した利用者もそのまま送れる。設定の名前は `gmorn_save_saver/*` から `gmorn_save_cloud/*` へ、環境変数は `GMORN_SAVE_SAVER_*` から `GMORN_SAVE_CLOUD_*` へ変わった。
+
+管理セーブの取得には [cloudflared](https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/downloads/) が必要（`PATH`、`/opt/homebrew/bin`、または`/usr/local/bin`から検出）。単体検証は `./verify_cloud.sh`。
+
+### 機能
+
+- ローカル保存と独立した `.cloud.json` サイドカーへ資格情報と最新の保留データを保存
+- 起動後の `resume()` で中断した送信を再開
+- HTTP失敗時は保留データを保持して再試行
+- 通常のゲーム実行では画面をJPEG（幅640px以内・100KiB以下）でMornDropへ送り、URLと撮影時刻をセーブに添付
+- EditorドックからSave IDで取得し、次のEditor実行だけ別ファイルを読み込む
+- エディタープラグイン処理・headlessからの送信は明示的な環境変数opt-inがない限り停止（Editorのゲーム実行は通常送信）
+
+### 使い方
+
+1. GMornSave のプラグインを有効にすると、自動読み込み `GMornSaveCloud` とEditorドックが入ります。送り先（endpoint）を設定しない限り何も送りません。
+2. プロジェクト設定に `gmorn_save_cloud/endpoint` と `gmorn_save_cloud/project_id` を設定します。サーバーURLやproject_idは環境変数 `GMORN_SAVE_CLOUD_ENDPOINT` / `GMORN_SAVE_CLOUD_PROJECT_ID` でも指定できます。秘密値は設定へ置かないでください。
+3. 保存が成功した後、現在のDictionaryと通常保存パスを渡します。通常保存処理を待たせません。
+
+```gdscript
+GMornSaveCloud.submit(game_data, save_path)
+GMornSaveCloud.resume(save_path) # 起動時、通常保存をロードした後に呼ぶ
+```
+
+4. Editorから別ユーザーのセーブを試すには、Editorを停止した状態でGMornSaveCloudドックへSave IDを入れて、「Cloudflare Access認証して取得」を押します。`cloudflared access login` が非同期で起動し、初回はブラウザーでCloudflare Accessへログインします。JWTはHTTPヘッダーへ渡すだけで、アドオン内には表示・保存しません。認証キャッシュはcloudflaredが管理します。project_idが一致する辞書データだけを `gmorn_save_cloud/preview_path` （既定 `user://gmorn_save_cloud_preview.json`）へ保存します。
+5. ゲーム起動時、保存を読む前に `var preview_path = GMornSaveCloud.consume_preview()` を呼び、空でなければゲーム側の保存パスをその値に切り替えます。プレビュー中は送信を止めます。マーカーはEditorからの通常実行に限って一度だけ消費されます。
+
+セーブの送信は、保存が続く間は2秒の静かな間を待ってから最新1件を送ります。プロジェクト設定の `gmorn_save_cloud/min_interval_seconds`（秒、既定0）を置くと、前の送信からその秒数が経つまで待ち、間の保存は最新1件にまとめて送ります。保存のたびに送ると、サーバーの履歴が操作ごとに細かく積もるためです。待っている間に終了した分は `.cloud.json` に残り、次の起動の `resume()` で送ります。
+
+通常のゲーム実行でスクリーンショットを撮り、JPEGをMornDrop（`https://drop.tsukumistudio.com`）へアップロードします。新しい画像は最短120秒ごとにし、その間の保存には直近の画像URLを再利用します。取得失敗・上限超過・タイムアウト時もJSONのセーブは続きます。画像のURLとUTC撮影時刻はクラウドセーブAPIの`screenshot`項目に保存し、ゲームデータDictionaryには混ぜません。Editorプラグイン画面、headless、プレビュー実行では撮影しません。Editorから実行した通常のゲームは対象です。
+
+MornDropの画像URLは公開URLです。URLを知る人は閲覧でき、最後に参照されてから30日後に削除されます。画面に個人情報を出した状態で保存しないでください。
+
+送信のopt-in環境変数はEditorプラグイン中に限り `GMORN_SAVE_CLOUD_EDITOR_OPT_IN=1`、headless中に限り `GMORN_SAVE_CLOUD_TEST_OPT_IN=1` です。headlessでプレビュー消費テストを行う場合だけ `GMORN_SAVE_CLOUD_TEST_PREVIEW=1` を指定します。`GMORN_SAVE_CLOUD_LIVE_TEST=1` を付けて `verify.sh` を実行すると、設定済みのendpoint・project_idへ実際の登録、二段階アップロード、取得を行います。Live検証の管理取得では、事前に同じendpointへcloudflaredで認証しキャッシュを作成してください。
+
 ## ライセンス
 
 Unlicense（パブリックドメイン）。
