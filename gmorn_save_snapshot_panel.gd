@@ -16,7 +16,7 @@ var _populated := false
 func _ready() -> void:
 	$Create/Save.pressed.connect(func() -> void: request("save", $Create/Name.text))
 	$Create/Name.text_submitted.connect(func(value: String) -> void: request("save", value))
-	$Refresh.pressed.connect(func() -> void: request("list"))
+	$Header/Refresh.pressed.connect(func() -> void: request("list"))
 	_process(0.0)
 	if not _playing:
 		request("list")
@@ -39,7 +39,7 @@ func _process(_delta: float) -> void:
 		$Status.text = "応答がありません。接続後に一覧を更新してください"
 	$Status.visible = not $Status.text.is_empty()
 	$Create/Save.disabled = _pending_until > 0
-	$Refresh.disabled = _pending_until > 0
+	$Header/Refresh.disabled = _pending_until > 0
 	for button: Button in $Saves.find_children("*", "Button", true, false):
 		button.disabled = _pending_until > 0
 
@@ -76,10 +76,11 @@ func _receive(result: Dictionary) -> void:
 	_populated = true
 	for value: String in names:
 		var row := ROW.instantiate()
+		var label: Label = row.get_node("Name")
+		label.text = value
+		label.tooltip_text = value
 		var button: Button = row.get_node("Load")
-		button.text = value
-		button.tooltip_text = "このJSONをロードしてタイトルへ戻ります"
-		button.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+		button.tooltip_text = "このJSONを今のセーブにしてタイトルへ戻ります"
 		button.pressed.connect(request.bind("load", value))
 		row.get_node("Delete").pressed.connect(request.bind("delete", value))
 		$Saves.add_child(row)

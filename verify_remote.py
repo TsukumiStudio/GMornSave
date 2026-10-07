@@ -37,9 +37,9 @@ func _run() -> void:
 		var button: Button
 		deadline = Time.get_ticks_msec() + 10000
 		while button == null:
-			for child: Button in panel.get_node("Saves").find_children("Load", "Button", true, false):
-				if child.text == title:
-					button = child
+			for row: Node in panel.get_node("Saves").get_children():
+				if row.get_node("Name").text == title:
+					button = row.get_node("Load")
 			if Time.get_ticks_msec() > deadline:
 				_finish("FAIL: 実行中の名前付き保存が一覧に出ない: " + panel.get_node("Status").text)
 				return

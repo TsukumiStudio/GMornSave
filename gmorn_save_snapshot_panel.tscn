@@ -3,8 +3,21 @@
 [node name="Snapshots" type="VBoxContainer"]
 script = ExtResource("1")
 size_flags_horizontal = 3
+[node name="Header" type="HBoxContainer" parent="."]
+layout_mode = 2
+[node name="Title" type="Label" parent="Header"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "セーブデータ一覧"
+[node name="Refresh" type="Button" parent="Header"]
+layout_mode = 2
+text = "一覧を更新"
 [node name="Create" type="HBoxContainer" parent="."]
 layout_mode = 2
+[node name="Indent" type="Control" parent="Create"]
+custom_minimum_size = Vector2(16, 0)
+layout_mode = 2
+mouse_filter = 2
 [node name="Name" type="LineEdit" parent="Create"]
 size_flags_horizontal = 3
 layout_mode = 2
@@ -13,9 +26,6 @@ max_length = 80
 [node name="Save" type="Button" parent="Create"]
 layout_mode = 2
 text = "保存"
-[node name="Refresh" type="Button" parent="."]
-layout_mode = 2
-text = "一覧を更新"
 [node name="Saves" type="VBoxContainer" parent="."]
 layout_mode = 2
 [node name="Status" type="Label" parent="."]
