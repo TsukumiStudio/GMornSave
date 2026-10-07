@@ -15,8 +15,10 @@ const STORE := preload("gmorn_save_store.gd")
 func create_control() -> Control:
 	var panel := PANEL.instantiate()
 	panel.get_node("Snapshots").save_path = save_path
-	var opener := panel.get_node("Open")
-	opener.action_text = "セーブデータの場所を開く"
+	panel.get_node("%FileName").text = save_path.get_file()
+	panel.get_node("%FileName").tooltip_text = save_path
+	var opener := panel.get_node("%Open")
+	opener.action_text = "開く"
 	opener.action = func() -> String:
 		# セーブがあればそのファイルを選んだ状態で、まだ無ければ置き場のフォルダを開く。
 		var target := save_path
@@ -26,13 +28,30 @@ func create_control() -> Control:
 				return "セーブデータの置き場がまだありません"
 		var error: Error = show_in_file_manager.call(ProjectSettings.globalize_path(target))
 		return "セーブデータの場所を開きました" if error == OK else "開けませんでした: " + error_string(error)
-	var control := panel.get_node("Delete")
-	control.action_text = "セーブデータの削除"
+	var control := panel.get_node("%Delete")
+	control.action_text = "削除"
 	control.requires_confirmation = true
 	control.action = func() -> String:
 		var error := erase_save()
+		_refresh_updated(panel)
 		return "セーブデータを削除しました" if error == OK else "削除できませんでした: " + error_string(error)
+	# 実行中のゲームが保存しても追いつくよう、毎秒見直す。
+	panel.get_node("%RefreshTimer").timeout.connect(_refresh_updated.bind(panel))
+	_refresh_updated(panel)
 	return panel
+
+## 2行目の「最終更新時刻」を今のファイルに合わせる。手元の時刻で出す。
+func _refresh_updated(panel: Control) -> void:
+	var label := panel.get_node("%Updated") as Label
+	label.text = "最終更新時刻：" + updated_text()
+
+func updated_text() -> String:
+	if not FileAccess.file_exists(save_path):
+		return "まだありません"
+	var modified := FileAccess.get_modified_time(save_path)
+	var bias := int(Time.get_time_zone_from_system().get("bias", 0)) * 60
+	var date := Time.get_datetime_dict_from_unix_time(modified + bias)
+	return "%04d/%02d/%02d %02d:%02d:%02d" % [date.year, date.month, date.day, date.hour, date.minute, date.second]
 
 func erase_save() -> Error:
 	if not save_path.begins_with("user://") or save_path.get_file().is_empty():
