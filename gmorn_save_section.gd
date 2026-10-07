@@ -15,7 +15,6 @@ const STORE := preload("gmorn_save_store.gd")
 func create_control() -> Control:
 	var panel := PANEL.instantiate()
 	panel.get_node("Snapshots").save_path = save_path
-	panel.get_node("%FileName").text = save_path.get_file()
 	panel.get_node("%FileName").tooltip_text = save_path
 	var opener := panel.get_node("%Open")
 	opener.action_text = "開く"
@@ -40,10 +39,10 @@ func create_control() -> Control:
 	_refresh_updated(panel)
 	return panel
 
-## 2行目の「最終更新時刻」を今のファイルに合わせる。手元の時刻で出す。
+## 「ファイル名（最終更新時刻）」を今のファイルに合わせる。手元の時刻で出す。
 func _refresh_updated(panel: Control) -> void:
-	var label := panel.get_node("%Updated") as Label
-	label.text = "最終更新時刻：" + updated_text()
+	var label := panel.get_node("%FileName") as Label
+	label.text = "%s（%s）" % [save_path.get_file(), updated_text()]
 
 func updated_text() -> String:
 	if not FileAccess.file_exists(save_path):
