@@ -39,10 +39,10 @@ func create_control() -> Control:
 	_refresh_updated(panel)
 	return panel
 
-## 「ファイル名（最終更新時刻）」を今のファイルに合わせる。手元の時刻で出す。
+## 「今のセーブ（最終更新時刻）」を今のファイルに合わせる。手元の時刻で出す。ファイルの場所はカーソルを置くと出る。
 func _refresh_updated(panel: Control) -> void:
 	var label := panel.get_node("%FileName") as Label
-	label.text = "%s（%s）" % [save_path.get_file(), updated_text()]
+	label.text = "今のセーブ（%s）" % updated_text()
 
 func updated_text() -> String:
 	if not FileAccess.file_exists(save_path):

@@ -14,7 +14,7 @@ layout_mode = 2
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
-text = "save.json（----/--/-- --:--:--）"
+text = "今のセーブ（----/--/-- --:--:--）"
 text_overrun_behavior = 3
 
 [node name="Delete" parent="Row" instance=ExtResource("1")]
