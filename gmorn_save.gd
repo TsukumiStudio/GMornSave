@@ -30,6 +30,10 @@ var snapshot_path: Callable
 var snapshot_data: Callable
 var snapshot_loaded: Callable
 
+## 今のセーブの置き場。`configure_snapshots()` 前は空。
+func current_save_path() -> String:
+	return String(snapshot_path.call()) if snapshot_path.is_valid() else ""
+
 ## ゲーム固有の保存先・現在値・タイトル再起動処理を接続する。
 func configure_snapshots(path_provider: Callable, data_provider: Callable, loaded: Callable) -> void:
 	snapshot_path = path_provider
@@ -61,12 +65,20 @@ func snapshot_request(command: String, value := "") -> Dictionary:
 				error = String(snapshot_loaded.call())
 		"delete":
 			error = slots.delete_snapshot(value)
+		"erase":
+			# 今のセーブ（本体・控え・書きかけ）を消してから、ゲームを読み直す。
+			var store := open(slots.save_path)
+			var erased: Error = store.erase()
+			error = "" if erased == OK else "削除できませんでした: " + error_string(erased)
+			if error.is_empty():
+				error = String(snapshot_loaded.call())
 		"list":
 			pass
 		_:
 			error = "不明なセーブ操作です"
 	return {"ok": error.is_empty(), "message": error if not error.is_empty() else (
-		"削除しました" if command == "delete" else "保存しました" if command == "save" else "ロードしました。タイトルから開始します" if command == "load" else ""),
+		"削除しました" if command == "delete" else "保存しました" if command == "save" else "ロードしました。タイトルから開始します" if command == "load"
+		else "今のセーブを削除しました。タイトルから開始します" if command == "erase" else ""),
 		"names": slots.names()}
 
 func _capture(message: String, data: Array) -> bool:
