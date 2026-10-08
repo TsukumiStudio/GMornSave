@@ -4,8 +4,6 @@ const CLOUD := preload("res://addons/gmorn_save/gmorn_save_cloud.gd")
 const STORE := preload("res://addons/gmorn_save/gmorn_save_store.gd")
 const SIDECAR := "user://gmorn_save_cloud_verify.json"
 const SAVE := "user://gmorn_save_cloud_verify.json.cloud.json"
-const MARKER := "user://gmorn_save_cloud_preview_request.json"
-const PREVIEW := "user://gmorn_save_cloud_preview.json"
 const IMAGE_SUCCESS := "user://gmorn_save_cloud_image_success.json.cloud.json"
 const IMAGE_FAILURE := "user://gmorn_save_cloud_image_failure.json.cloud.json"
 const IMAGE_URL := "https://drop.tsukumistudio.com/2026/09/23/0123456789abcdef0123456789abcdef.jpg"
@@ -76,13 +74,6 @@ func _run() -> void:
 	cloud._sidecar_path = ""
 	assert(not cloud._load_sidecar(SIDECAR), "created a new registration despite a recoverable backup")
 	assert(not FileAccess.file_exists(SAVE), "wrote a new sidecar beside the backup")
-	# Preview marker is one-shot; test opt-in allows headless verification.
-	assert(_open_store(PREVIEW).save({"day": 23}))
-	assert(_open_store(MARKER).save({"path": PREVIEW}))
-	OS.set_environment("GMORN_SAVE_CLOUD_TEST_PREVIEW", "1")
-	assert(cloud.consume_preview() == PREVIEW)
-	assert(cloud.consume_preview().is_empty())
-	assert(cloud._preview_active)
 	if not await _verify_screenshot_flow():
 		return
 	# 送信の最短間隔。未設定なら2秒の静かな間だけ、設定すると前の送信からその秒数を待つ。
@@ -274,6 +265,6 @@ func _prime_registered_cloud(cloud: TestCloud, path: String) -> void:
 	assert(cloud._persist())
 
 func _clean() -> void:
-	for path in [SAVE, SAVE + ".bak", SAVE + ".tmp", MARKER, MARKER + ".bak", MARKER + ".tmp", PREVIEW, PREVIEW + ".bak", PREVIEW + ".tmp", IMAGE_SUCCESS, IMAGE_SUCCESS + ".bak", IMAGE_SUCCESS + ".tmp", IMAGE_FAILURE, IMAGE_FAILURE + ".bak", IMAGE_FAILURE + ".tmp", IMAGE_FAILURE + ".blocked"]:
+	for path in [SAVE, SAVE + ".bak", SAVE + ".tmp", IMAGE_SUCCESS, IMAGE_SUCCESS + ".bak", IMAGE_SUCCESS + ".tmp", IMAGE_FAILURE, IMAGE_FAILURE + ".bak", IMAGE_FAILURE + ".tmp", IMAGE_FAILURE + ".blocked"]:
 		if FileAccess.file_exists(path):
 			DirAccess.remove_absolute(ProjectSettings.globalize_path(path))

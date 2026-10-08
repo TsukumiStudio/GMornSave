@@ -9,11 +9,9 @@ extends EditorPlugin
 const AUTOLOAD_NAME := "GMornSave"
 const CLOUD_AUTOLOAD_NAME := "GMornSaveCloud"
 const DEBUGGER := preload("gmorn_save_debugger.gd")
-const CLOUD_PANEL := preload("gmorn_save_cloud_panel.tscn")
 ## プロジェクト設定の画面から変えられるように、型と既定値を登録する。
 const CLOUD_MIN_INTERVAL_SETTING := "gmorn_save_cloud/min_interval_seconds"
 var debugger: EditorDebuggerPlugin
-var cloud_panel: Control
 ## このプラグインが自動読み込みを足したときだけ、外すときにも消す（手で書いた登録は残す）。
 var added_cloud_autoload := false
 
@@ -40,18 +38,11 @@ func _enter_tree() -> void:
 	ProjectSettings.add_property_info({"name": CLOUD_MIN_INTERVAL_SETTING, "type": TYPE_FLOAT,
 		"hint": PROPERTY_HINT_RANGE, "hint_string": "0,600,1,or_greater,suffix:s"})
 	ProjectSettings.set_as_basic(CLOUD_MIN_INTERVAL_SETTING, true)
-	cloud_panel = CLOUD_PANEL.instantiate()
-	if ProjectSettings.has_setting("gmorn_save_cloud/preview_path"):
-		cloud_panel.save_path = String(ProjectSettings.get_setting("gmorn_save_cloud/preview_path"))
-	add_control_to_dock(DOCK_SLOT_RIGHT_UL, cloud_panel)
 
 func _exit_tree() -> void:
 	DEBUGGER.current = null
 	if is_instance_valid(debugger):
 		remove_debugger_plugin(debugger)
-	if is_instance_valid(cloud_panel):
-		remove_control_from_docks(cloud_panel)
-		cloud_panel.queue_free()
 	remove_autoload_singleton(AUTOLOAD_NAME)
 	if added_cloud_autoload:
 		remove_autoload_singleton(CLOUD_AUTOLOAD_NAME)

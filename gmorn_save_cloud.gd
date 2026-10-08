@@ -16,7 +16,6 @@ var _retry: Timer
 var _sidecar_path := ""
 var _state: Dictionary = {}
 var _loaded := false
-var _preview_active := false
 var _request_kind := ""
 var _retry_seconds := 1.0
 var _sent_revision := 0
@@ -38,7 +37,7 @@ func _ready() -> void:
 	_retry.timeout.connect(_send_pending)
 
 func submit(data: Dictionary, save_path: String) -> void:
-	if not _enabled() or _preview_active:
+	if not _enabled():
 		return
 	if _request_kind != "" and (_request_sidecar_path != save_path + SIDECAR_SUFFIX or _request_endpoint != _endpoint()):
 		status_changed.emit("通信中は保存先とendpointを切り替えられません")
@@ -54,7 +53,7 @@ func submit(data: Dictionary, save_path: String) -> void:
 	status_changed.emit("クラウド保存を予約しました")
 
 func resume(save_path: String) -> void:
-	if not _enabled() or _preview_active or not FileAccess.file_exists(save_path + SIDECAR_SUFFIX):
+	if not _enabled() or not FileAccess.file_exists(save_path + SIDECAR_SUFFIX):
 		return
 	if _request_kind != "" and (_request_sidecar_path != save_path + SIDECAR_SUFFIX or _request_endpoint != _endpoint()):
 		status_changed.emit("通信中は保存先とendpointを切り替えられません")
@@ -63,36 +62,6 @@ func resume(save_path: String) -> void:
 		return
 	if _state.get("pending", {}) is Dictionary and not _state.pending.is_empty():
 		_send_pending()
-
-## Editorから1回だけ指定されたプレビュー保存先を返す。ゲーム側でロード前に呼ぶ。
-func consume_preview() -> String:
-	if not OS.has_feature("editor") or Engine.is_editor_hint():
-		return ""
-	if DisplayServer.get_name() == "headless" and OS.get_environment("GMORN_SAVE_CLOUD_TEST_PREVIEW") != "1":
-		return ""
-	var store = _open_store("user://gmorn_save_cloud_preview_request.json")
-	if not FileAccess.file_exists(store.path):
-		return ""
-	var json := JSON.new()
-	var file := FileAccess.open(store.path, FileAccess.READ)
-	if file == null or json.parse(file.get_as_text()) != OK or not json.data is Dictionary or not json.data.get("path", "") is String:
-		status_changed.emit("プレビュー指定ファイルを読めません")
-		return ""
-	var path := String(json.data.path)
-	var configured_path := "user://gmorn_save_cloud_preview.json"
-	if ProjectSettings.has_setting("gmorn_save_cloud/preview_path"):
-		configured_path = String(ProjectSettings.get_setting("gmorn_save_cloud/preview_path"))
-	if path != configured_path:
-		status_changed.emit("プレビュー指定先が設定と一致しません")
-		return ""
-	if not FileAccess.file_exists(path):
-		status_changed.emit("プレビューセーブが見つかりません")
-		return ""
-	if store.erase() != OK:
-		status_changed.emit("プレビュー指定を削除できません")
-		return ""
-	_preview_active = true
-	return path
 
 func _enabled() -> bool:
 	var endpoint := _endpoint()
@@ -365,7 +334,7 @@ func _on_screenshot_completed(result: int, code: int, body: PackedByteArray, end
 		_send_save(endpoint)
 
 func _can_capture_screenshot() -> bool:
-	return not Engine.is_editor_hint() and DisplayServer.get_name() != "headless" and not _preview_active \
+	return not Engine.is_editor_hint() and DisplayServer.get_name() != "headless" \
 		and is_inside_tree() and get_viewport() != null and get_viewport().get_texture() != null
 
 func _capture_viewport_image() -> Image:
