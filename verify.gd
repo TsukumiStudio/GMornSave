@@ -1,9 +1,6 @@
 extends SceneTree
 
-## 壊れ方ごとに、どこまで守れるかを確かめる。
-##
-## 通る道だけを見ても意味がない。ここで見たいのは「壊したときに何が残るか」で
-## ある。書きかけで落ちた、中身が切れた、本体だけ消えた、の3つを実際に作る。
+## 書きかけで落ちた・中身が切れた・本体だけ消えた、の各場合に何が残るかを保証する。
 
 class UnreadableFinalStore extends "res://addons/gmorn_save/gmorn_save_store.gd":
 	var reject_final := false
@@ -43,14 +40,14 @@ func _run() -> void:
 	assert(int(reloaded["money"]) == 123456, "所持金が %s" % reloaded["money"])
 	assert(int(reloaded["day"]) == 17, "日数が %s" % reloaded["day"])
 
-	# 項目を増やしても古い保存が読める。既定値のほうから埋まる。
+	# 項目を増やしても古い保存が読める。
 	var extended := _defaults()
 	extended["new_thing"] = "既定"
 	var merged: Dictionary = store.load_data(extended)
 	assert(String(merged["new_thing"]) == "既定", "増やした項目が埋まらない")
 	assert(int(merged["money"]) == 123456, "増やしたら前の内容が消えた")
 
-	# 既定値の辞書は汚さない。使い回されると次回の既定値が変わってしまう。
+	# 渡した既定値の辞書は汚さない。
 	assert(int(extended["money"]) == 0, "渡した既定値が書き換わっている")
 
 	# 2回目の書き出しで控えができる。
@@ -58,7 +55,7 @@ func _run() -> void:
 	assert(store.save(merged), "2回目を書き出せない")
 	assert(FileAccess.file_exists(store.backup_path()), "控えができていない")
 
-	# 本体を途中で切る。書いている最中に落ちた形。控えから戻れなければならない。
+	# 本体が途中で切れていても控えから戻る。
 	var whole := FileAccess.get_file_as_string(PROBE_PATH)
 	var broken := FileAccess.open(PROBE_PATH, FileAccess.WRITE)
 	broken.store_string(whole.substr(0, int(whole.length() * 0.6)))
@@ -71,23 +68,21 @@ func _run() -> void:
 	assert(int(restored["money"]) == 123456,
 		"控えの中身が %s" % restored["money"])
 
-	# 壊れた本体で控えを上書きしない。上書きすると戻す先が無くなる。
+	# 壊れた本体で控えを上書きしない。
 	var backup_before := FileAccess.get_file_as_string(store.backup_path())
 	store.save(restored)
 	var backup_after := FileAccess.get_file_as_string(store.backup_path())
 	assert(backup_before == backup_after or store.is_readable(store.backup_path()),
 		"控えが読めない形になった")
 
-	# 本体だけ消えても控えから戻る。同期の都合でこの形になることがある。
+	# 本体だけ消えても控えから戻る。
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(PROBE_PATH))
 	var from_backup: Dictionary = store.load_data(_defaults())
 	assert(store.last_outcome == store.Outcome.RESTORED_FROM_BACKUP,
 		"本体が消えたときに控えを見ていない")
 	assert(int(from_backup["money"]) > 0, "控えから戻せていない")
 
-	# 本体も控えも壊れていたら、無いのではなく読めないと言う。呼ぶ側は
-	# 「無いとき」だけ旧版からの引き継ぎを試したい。読めないときに引き継ぐと、
-	# 本体が消えただけの人の進行を古い内容で上書きしてしまう。
+	# 本体も控えも壊れていたら、無いのではなく読めないと言う。
 	for target: String in [PROBE_PATH, store.backup_path()]:
 		var junk := FileAccess.open(target, FileAccess.WRITE)
 		junk.store_string("これはJSONではない")
@@ -96,7 +91,7 @@ func _run() -> void:
 	assert(store.last_outcome == store.Outcome.UNREADABLE,
 		"壊れているのに %d と言っている" % store.last_outcome)
 
-	# 消すと控えも書きかけも消える。本体だけ消すと、次に読んだときに戻ってくる。
+	# 消すと控えも書きかけも消える。
 	store.save(_defaults())
 	assert(store.erase() == OK, "消せない")
 	assert(not FileAccess.file_exists(PROBE_PATH), "本体が残っている")
@@ -107,7 +102,7 @@ func _run() -> void:
 	store.enabled = false
 	assert(not store.save(_defaults()), "切ってあるのに書き出した")
 	assert(not FileAccess.file_exists(PROBE_PATH), "切ってあるのにファイルができた")
-	# 読み取りは止めない。読めるかどうかを見る検証は、書かずに回せる。
+	# 読み取りは止めない。
 	store.load_data(_defaults())
 	assert(store.last_outcome == store.Outcome.MISSING, "読み取りまで止まっている")
 

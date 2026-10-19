@@ -22,7 +22,6 @@ var _sent_revision := 0
 var _request_endpoint := ""
 var _request_sidecar_path := ""
 var _screenshot_captured_at := ""
-## 直前にセーブを送り始めた時刻（ミリ秒）。送信の最短間隔を守るために見る。
 var _last_save_started_msec := -1
 
 func _ready() -> void:
@@ -73,10 +72,8 @@ func _enabled() -> bool:
 		return false
 	return true
 
-## 次のセーブを送るまで待つ秒数。保存が続く間は2秒の静かな間を待つ。
-## `gmorn_save_cloud/min_interval_seconds` を置くと、前の送信からその秒数が経つまで
-## 待ち、間の保存は最新1件にまとめて送る。保存のたびに送ると、サーバーの履歴が
-## 操作ごとに細かく積もるため。
+## 保存のたびに送らない。2秒の静かな間と `min_interval_seconds` を待ち、間の保存は
+## 最新1件にまとめる。サーバーの履歴が操作ごとに細かく積もるため。
 func _seconds_until_next_send() -> float:
 	var wait := 2.0
 	if _last_save_started_msec >= 0:
@@ -301,7 +298,6 @@ func _on_request_completed(result: int, code: int, _headers: PackedStringArray, 
 		_retry_seconds = 1.0
 		status_changed.emit("クラウド保存済み")
 		if not _state.pending.is_empty():
-			# 送っている間に溜まった保存も、最短間隔を守って送る。
 			_retry.start(_seconds_until_next_send())
 
 func _on_screenshot_completed(result: int, code: int, body: PackedByteArray, endpoint: String) -> void:

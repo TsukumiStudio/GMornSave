@@ -1,22 +1,15 @@
 @tool
 extends EditorPlugin
 
-## GMornSave を組み込むための入口。
-##
-## 保存はどこからでも作りたいので、自動読み込みに登録する。クラウド保存の送信
-## （`GMornSaveCloud`）も同じアドオンに入っている。送り先を設定しなければ何も送らない。
-
 const AUTOLOAD_NAME := "GMornSave"
 const CLOUD_AUTOLOAD_NAME := "GMornSaveCloud"
 const DEBUGGER := preload("gmorn_save_debugger.gd")
-## プロジェクト設定の画面から変えられるように、型と既定値を登録する。
 const CLOUD_MIN_INTERVAL_SETTING := "gmorn_save_cloud/min_interval_seconds"
 var debugger: EditorDebuggerPlugin
-## このプラグインが自動読み込みを足したときだけ、外すときにも消す（手で書いた登録は残す）。
+## 手で書いた登録は外すときに消さない。
 var added_cloud_autoload := false
 
-## 置き場所を決め打ちにしない。submodule で好きな名前の場所へ入れられるように、
-## 自分の居場所から辿る。
+## 置き場所を決め打ちにしない。submodule で任意の場所へ入れられるよう自分の居場所から辿る。
 func _autoload_path() -> String:
 	return get_script().resource_path.get_base_dir().path_join("gmorn_save.gd")
 
@@ -24,14 +17,12 @@ func _enter_tree() -> void:
 	debugger = DEBUGGER.new()
 	DEBUGGER.current = debugger
 	add_debugger_plugin(debugger)
-	# 既に登録済みなら足さない。毎回足すとエディタの起動ごとに「自動読み込みを追加」の
-	# 履歴が（アドオンの数だけ）並ぶ。project.godot に書いてあれば、それで動く。
+	# 登録済みなら足さない。毎回足すとエディタ起動ごとに「自動読み込みを追加」の履歴が並ぶ。
 	if not ProjectSettings.has_setting("autoload/" + AUTOLOAD_NAME):
 		add_autoload_singleton(AUTOLOAD_NAME, _autoload_path())
 	if not ProjectSettings.has_setting("autoload/" + CLOUD_AUTOLOAD_NAME):
 		add_autoload_singleton(CLOUD_AUTOLOAD_NAME, _autoload_path().get_base_dir().path_join("gmorn_save_cloud.gd"))
 		added_cloud_autoload = true
-	# セーブの送信の最短間隔（秒）。0 なら保存のたびに（2秒の静かな間の後で）送る。
 	if not ProjectSettings.has_setting(CLOUD_MIN_INTERVAL_SETTING):
 		ProjectSettings.set_setting(CLOUD_MIN_INTERVAL_SETTING, 0.0)
 	ProjectSettings.set_initial_value(CLOUD_MIN_INTERVAL_SETTING, 0.0)

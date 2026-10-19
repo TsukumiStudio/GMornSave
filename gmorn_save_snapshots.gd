@@ -1,7 +1,7 @@
 @tool
 extends RefCounted
 
-## 通常保存とは別に、名前付きのJSONを保持する。
+## 通常保存とは別の名前付き JSON。
 const STORE := preload("gmorn_save_store.gd")
 var save_path := "user://save.json"
 
@@ -46,7 +46,7 @@ func restore_snapshot(value: String) -> String:
 		return "セーブ名が不正です"
 	var snapshot := STORE.new()
 	snapshot.path = directory().path_join(value + ".json")
-	# 指定したJSON自身が壊れていたら拒否し、現在の保存を維持する。
+	# 壊れた JSON で現在の保存を置き換えない。
 	if not snapshot.is_readable(snapshot.path):
 		return "選択したJSONが存在しないか、読み込めません"
 	var current := STORE.new()

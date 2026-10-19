@@ -1,17 +1,11 @@
 extends VBoxContainer
 
-## ゲームの中（デバッグ板など）に置く、Editorの欄と同じ並びのセーブ欄。
-##
-## 今のセーブ（最終更新時刻） [削除][開く]
-## セーブデータ一覧 [一覧を更新] / セーブ名 [保存] / 各行 [削除][使う]
-##
-## 保存先・現在値・読み直しは `GMornSave.configure_snapshots()` で作品が接続したものを使う。
-## Editorを介さず、その場で処理する。Editor専用の型に触れないので、書き出したゲームでも動く
-## （Editorの欄 `gmorn_save_snapshot_panel` は EditorDebuggerPlugin を使うため、ここでは使わない）。
+## ゲームの中に置くセーブ欄。Editor 専用の型（`gmorn_save_snapshot_panel` が使う
+## EditorDebuggerPlugin）に触れないので、書き出したゲームでも動く。
 
 const ROW := preload("gmorn_save_snapshot_row.tscn")
 const CONFIRM_MSEC := 3000
-## OSのファイル管理（macOSはFinder、WindowsはExplorer）で開く。検証では差し替える。
+## 検証では差し替える。
 var show_in_file_manager: Callable = OS.shell_show_in_file_manager
 var service: Node
 var _armed_until := 0
@@ -33,7 +27,6 @@ func _process(_delta: float) -> void:
 		_armed_until = 0
 		%Delete.text = "削除"
 
-## 「今のセーブ（最終更新時刻）」を今のファイルに合わせる。手元の時刻で出す。
 func refresh() -> void:
 	var path := _path()
 	%FileName.tooltip_text = path
@@ -49,7 +42,7 @@ func _updated_text(path: String) -> String:
 	var date := Time.get_datetime_dict_from_unix_time(FileAccess.get_modified_time(path) + bias)
 	return "%04d/%02d/%02d %02d:%02d:%02d" % [date.year, date.month, date.day, date.hour, date.minute, date.second]
 
-## 押し間違えで進行を消さないよう、3秒以内の二度押しで消す。
+## 押し間違えで進行を消さないよう、二度押しで消す。
 func _delete() -> void:
 	if service == null:
 		return
@@ -74,7 +67,6 @@ func _open() -> void:
 	var error: Error = show_in_file_manager.call(ProjectSettings.globalize_path(target))
 	_show_status("セーブデータの場所を開きました" if error == OK else "この環境では開けません: " + error_string(error))
 
-## 名前付きセーブの保存・使う・削除・一覧。結果の一覧で並びを作り直す。
 func _request(command: String, value: String) -> void:
 	if service == null:
 		_show_status("GMornSave が見つかりません")

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""ヘッドレスEditorとゲームを接続し、2回の実行でドックの釦が届くか確認する。"""
+"""ヘッドレス Editor とゲームを実接続し、2回の実行でドックの釦が届くことを保証する。"""
 import os
 from pathlib import Path
 import shutil
@@ -115,7 +115,7 @@ renderer/rendering_method="gl_compatibility"
         with socket.socket() as listener:
             listener.bind(("127.0.0.1", 0))
             address = f"tcp://127.0.0.1:{listener.getsockname()[1]}"
-        # 実際のプロジェクトやユーザーの保存・Editor設定へ触れない。
+        # 利用者の本物の保存・Editor 設定へ触れない。
         environment = dict(os.environ, HOME=str(work / "home"), XDG_DATA_HOME=str(work / "data"), XDG_CONFIG_HOME=str(work / "config"), GMORN_REMOTE_PORT=address.rsplit(":", 1)[1])
         base = [GODOT, "--headless", "--path", str(work)]
         project = work / "project.godot"

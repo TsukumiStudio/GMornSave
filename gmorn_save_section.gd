@@ -3,13 +3,13 @@ extends "../gmorn_debug_menu/gmorn_debug_menu_section.gd"
 
 const PANEL := preload("gmorn_save_section.tscn")
 
-# OSのファイル管理（macOSはFinder、WindowsはExplorer）で開く。テストでは外部アプリを起動せず、要求したパスを検証する。
+# テストでは外部アプリを起動せず、要求したパスを検証する。
 var show_in_file_manager: Callable = OS.shell_show_in_file_manager
 const STORE := preload("gmorn_save_store.gd")
 
-## このプロジェクトの削除対象。ディレクトリ単位の削除は行わない。
+## 削除する1ファイル。ディレクトリ単位では消さない。
 @export var save_path := "user://save.json"
-## 旧版の自動取り込みを止める印が必要なプロジェクトのみ指定する。
+## 旧版の自動取り込みを止める印が要るプロジェクトだけ指定する。
 @export var migration_marker_path := ""
 
 func create_control() -> Control:
@@ -19,7 +19,6 @@ func create_control() -> Control:
 	var opener := panel.get_node("%Open")
 	opener.action_text = "開く"
 	opener.action = func() -> String:
-		# セーブがあればそのファイルを選んだ状態で、まだ無ければ置き場のフォルダを開く。
 		var target := save_path
 		if not FileAccess.file_exists(save_path):
 			target = save_path.get_base_dir()
@@ -34,12 +33,11 @@ func create_control() -> Control:
 		var error := erase_save()
 		_refresh_updated(panel)
 		return "セーブデータを削除しました" if error == OK else "削除できませんでした: " + error_string(error)
-	# 実行中のゲームが保存しても追いつくよう、毎秒見直す。
+	# 実行中のゲームの保存に追いつくよう、毎秒見直す。
 	panel.get_node("%RefreshTimer").timeout.connect(_refresh_updated.bind(panel))
 	_refresh_updated(panel)
 	return panel
 
-## 「今のセーブ（最終更新時刻）」を今のファイルに合わせる。手元の時刻で出す。ファイルの場所はカーソルを置くと出る。
 func _refresh_updated(panel: Control) -> void:
 	var label := panel.get_node("%FileName") as Label
 	label.text = "今のセーブ（%s）" % updated_text()
@@ -55,7 +53,7 @@ func updated_text() -> String:
 func erase_save() -> Error:
 	if not save_path.begins_with("user://") or save_path.get_file().is_empty():
 		return ERR_INVALID_PARAMETER
-	# 先に印を書く。作れない場合は既存セーブを消さない。
+	# 印を先に書く。作れないなら既存セーブを消さない。
 	if not migration_marker_path.is_empty():
 		if not migration_marker_path.begins_with("user://"):
 			return ERR_INVALID_PARAMETER

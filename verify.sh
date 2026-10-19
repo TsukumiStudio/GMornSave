@@ -1,11 +1,9 @@
 #!/bin/sh
-# この部品だけを確かめる。
+# この部品だけをヘッドレスで確かめる。
 #
-# リポジトリ直下に project.godot は置けない。取り込む側が
-# addons/gmorn_save へ submodule として入れるため、そこに project.godot が
-# あるとGodotが「別のプロジェクト」と見なしてフォルダごと書き出しから外す。
-#
-# 代わりに、一時の置き場へ最小のプロジェクトを作って、その中へこの部品を写して回す。
+# リポジトリ直下に project.godot は置けない。submodule として取り込まれた先に
+# project.godot があると、Godot がそこを別プロジェクトと見なして書き出しから外す。
+# 代わりに一時の最小プロジェクトへ写して回す。
 set -eu
 
 addon_dir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)

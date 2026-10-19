@@ -12,7 +12,7 @@ func request(command: String, value := "") -> bool:
 	for session: EditorDebuggerSession in get_sessions():
 		if session.is_active():
 			active.append(session)
-	# 複数実行時は、どのゲームの保存かを勝手に選ばない。
+	# 複数実行時はどのゲームの保存かを勝手に選ばない。
 	if active.size() != 1:
 		return false
 	active[0].send_message("gmorn_save:request", [command, value])

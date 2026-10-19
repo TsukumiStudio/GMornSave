@@ -4,9 +4,7 @@
 
 書きかけで壊れない保存のGodotアドオン。
 
-本体へ直接書くと、書いている途中で落ちた場合にそこで切れたファイルが残る。実測では、正常な保存を6割の位置で切っただけで、日数も所持金も強化もすべて消えて初期値に戻った。さらに**次の保存がその壊れたファイルを上書きするため、手で直す機会も無くなる**。
-
-別名で書いて、読み直せることを確かめてから本体へ差し替える。差し替える前の本体は控えとして取っておく。
+本体へ直接書くと、書いている途中で落ちた場合にそこで切れたファイルが残り、次の保存がそれを上書きして手で直す機会も無くなる。別名で書いて、読み直せることを確かめてから本体へ差し替え、差し替える前の本体は控えとして取っておく。
 
 ## 動作環境
 
@@ -35,7 +33,7 @@ git submodule add https://github.com/TsukumiStudio/GMornSave.git addons/gmorn_sa
 
 Godotのエディタで「プロジェクト設定 → プラグイン」から `GMornSave` を有効にする。自動読み込みへ `GMornSave` が登録される。
 
-**リポジトリ直下に `project.godot` は置かない。** 置くとGodotがそこを別のプロジェクトと見なし、**そのフォルダを丸ごとスキャンから外す**。submoduleとして取り込んだ場合、エディタでは動くのに書き出した実行ファイルにだけアドオンが入らない。
+**リポジトリ直下に `project.godot` は置かない。** 置くとGodotがそこを別のプロジェクトと見なし、submoduleとして取り込んだ側の書き出しからフォルダごと外れる。
 
 ### 2. 置き場を作る
 
@@ -103,7 +101,7 @@ store.enabled = false                        # 書き出しだけ止める（読
 
 ### 手を入れる
 
-`verify.sh` で、壊れ方ごとにどこまで守れるかを確かめられる。書きかけで落ちた・中身が切れた・本体だけ消えた、の3つを実際に作って通す。通る道だけを見ても意味がない。
+`verify.sh` で、書きかけで落ちた・中身が切れた・本体だけ消えた、の各場合に何が残るかを確かめる。
 
 ```
 ./verify.sh
@@ -111,7 +109,7 @@ store.enabled = false                        # 書き出しだけ止める（読
 
 ## クラウド保存（GMornSaveCloud）
 
-GMornSaveで保存したJSONを [MornSaveServer](https://github.com/TsukumiStudio/MornSaveServer) へバックアップする。Editorからの取得・プレビュー機能は廃止した。以前は別アドオン GMornSaveSaver だったものを、2026-10-07 にこのアドオンへ統合した。サイドカー `*.cloud.json` の形は変えていないので、統合前に登録した利用者もそのまま送れる。設定の名前は `gmorn_save_saver/*` から `gmorn_save_cloud/*` へ、環境変数は `GMORN_SAVE_SAVER_*` から `GMORN_SAVE_CLOUD_*` へ変わった。旧アドオンは無効にして取り除くこと（残すと同じ `.cloud.json` を二重に書く）。endpoint・project_id は新しい設定名で設定し直す。
+GMornSaveで保存したJSONを [MornSaveServer](https://github.com/TsukumiStudio/MornSaveServer) へバックアップする。旧アドオン GMornSaveSaver を併用しない（同じ `.cloud.json` を二重に書く）。設定は `gmorn_save_cloud/*`、環境変数は `GMORN_SAVE_CLOUD_*`。
 
 単体検証は `./verify_cloud.sh`。
 
@@ -179,6 +177,6 @@ GMornSave.configure_snapshots(
 
 壊れたJSON・辞書以外・存在しない名前はロードしない。通常保存は既存Storeで退避・原子的に差し替える。書込み、バックアップ、renameの失敗はエラーを返し、前の通常保存を保つ。ロード前の通常保存は `.bak` に残る。各行の右にある「削除」で、その名前付きJSON・控え・書きかけだけを削除する。通常保存や別名のJSONは変更しない。実行中も同じ操作が使える。
 
-この更新を開いているEditorへ取り込む際は、GMornSaveおよびセクションを表示するGMornDebugMenuを一度OFF→ONするか、Editorを開き直す。シーン再読込だけではEditorDebuggerPluginを再登録できない。
+アドオンを更新したら、GMornSaveとGMornDebugMenuを一度OFF→ONするか、Editorを開き直す。シーン再読込だけではEditorDebuggerPluginを再登録できない。
 
-`sh verify.sh` は保存・復元・同名拒否・不正パス・破損JSONを検査する。`python3 verify_remote.py` は一時プロジェクトのヘッドレスEditorとゲームを実接続し、名前入力→保存→一覧のボタンからロード→停止→再実行を検査する。実際のプレイヤーの保存は使用しない。
+`sh verify.sh` は保存・復元・同名拒否・不正パス・破損JSONを検査する。`python3 verify_remote.py` は一時プロジェクトのヘッドレスEditorとゲームを実接続し、保存→ロード→停止→再実行を検査する。
