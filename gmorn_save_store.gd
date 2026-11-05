@@ -1,13 +1,9 @@
 @tool
 extends RefCounted
 
-## 書きかけで壊れない保存。1つの置き場ぶんを受け持つ。
-##
-## 本体へ直接書かない。書いている途中で落ちると切れたファイルが残り、次の保存が
-## それを上書きして手で直す機会も無くなる。`.tmp` へ書いて読み直し、本体を `.bak` へ
-## 写してから差し替える。読むときは本体 → 控え → 既定値の順。
+## 書き込み中の中断で本体を壊さないよう、検証済みの `.tmp` と差し替え、`.bak` を残す。
+## 読み込みは本体 → 控え → 既定値の順。
 
-## どこから戻したかで呼ぶ側の振る舞いが変わる。
 enum Outcome {
 	LOADED,
 	## 呼ぶ側は書き戻して本体を作り直す。
@@ -23,7 +19,7 @@ signal restored_from_backup(backup_path: String)
 signal save_failed(path: String)
 
 var path := ""
-## false で書き出しだけ止める。読み取りは止めない（読めるかを見る検証を書かずに回せる）。
+## false でも読み取りは止めない。
 var enabled := true
 var backup_suffix := ".bak"
 var temporary_suffix := ".tmp"
@@ -44,8 +40,7 @@ func load_data(defaults: Dictionary) -> Dictionary:
 		last_outcome = Outcome.LOADED
 		_fill_missing(data, defaults)
 		return data
-	# 本体が無い側でも控えを見る。差し替えの途中で落ちる、同期の都合で本体だけ消える、
-	# といった形がある。
+	# 差し替え中の中断や同期で本体だけ消える場合も、控えから戻す。
 	if _apply_file(backup_path(), data):
 		last_outcome = Outcome.RESTORED_FROM_BACKUP
 		_fill_missing(data, defaults)

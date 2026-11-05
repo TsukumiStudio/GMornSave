@@ -1,9 +1,5 @@
 #!/bin/sh
-# この部品だけをヘッドレスで確かめる。
-#
-# リポジトリ直下に project.godot は置けない。submodule として取り込まれた先に
-# project.godot があると、Godot がそこを別プロジェクトと見なして書き出しから外す。
-# 代わりに一時の最小プロジェクトへ写して回す。
+# submodule 直下に project.godot を置くとフォルダーごと書き出しから外されるため、一時プロジェクトで検証する。
 set -eu
 
 addon_dir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
