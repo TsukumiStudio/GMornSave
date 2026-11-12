@@ -137,7 +137,7 @@ GMornSaveCloud.resume(save_path) # 起動時、通常保存をロードした後
 
 通常のゲーム実行でスクリーンショットを撮り、JPEGをMornDrop（`https://drop.tsukumistudio.com`）へアップロードします。新しい画像は最短120秒ごとにし、その間の保存には直近の画像URLを再利用します。取得失敗・上限超過・タイムアウト時もJSONのセーブは続きます。画像のURLとUTC撮影時刻はクラウドセーブAPIの`screenshot`項目に保存し、ゲームデータDictionaryには混ぜません。Editorプラグイン画面、headlessでは撮影しません。Editorから実行した通常のゲームは対象です。
 
-MornDropの画像URLは公開URLです。URLを知る人は閲覧でき、最後に参照されてから30日後に削除されます。画面に個人情報を出した状態で保存しないでください。
+MornDropの画像URLは公開URLです。URLを知る人は閲覧でき、最後に参照されてから7日後に削除されます。画面に個人情報を出した状態で保存しないでください。
 
 送信のopt-in環境変数はEditorプラグイン中に限り `GMORN_SAVE_CLOUD_EDITOR_OPT_IN=1`、headless中に限り `GMORN_SAVE_CLOUD_TEST_OPT_IN=1` です。`GMORN_SAVE_CLOUD_LIVE_TEST=1` を付けて `verify_cloud.sh` を実行すると、設定済みのendpoint・project_idへ実際の登録、二段階アップロード、取得を行います。Live検証の管理取得では、事前に同じendpointへcloudflaredで認証しキャッシュを作成してください。
 
